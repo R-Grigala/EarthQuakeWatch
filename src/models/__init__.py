@@ -1,0 +1,1 @@
+from src.models.seismic_event import SeismicEvent
