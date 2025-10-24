@@ -9,9 +9,9 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 api = Api(
-    title='Earthquakes API',
+    title='EarthQuakeWatch API',
     version='1.0',
-    description='Earthquakes Data API',
+    description='Seismic monitoring API (MySQL → Datastore → BigQuery)',
     authorizations=Config.AUTHORIZATION,
-    doc='/api'
+    doc='/api' # Swagger UI path
 )
