@@ -1,7 +1,10 @@
 from flask_restx import Resource
+from flask import request
+import datetime
 
-from src.api.nsmodels import event_ns, event_model
+from src.api.nsmodels import event_ns, event_model, event_parser
 from src.models import SeismicEvent
+from src.config import Config
 
 @event_ns.route('/events')
 @event_ns.doc(responses={200: 'OK', 400: 'Invalid Argument', 401: 'JWT Token Expires', 403: 'Unauthorized', 404: 'Not Found'})
@@ -54,7 +57,5 @@ class SeismicListAPI(Resource):
         new_event.create()
 
         return {
-            'status': 'success',
-            'message': 'Seismic event added successfully',
-            'event_id': new_event.event_id
+            'message': f'Seismic event {new_event.event_id} saved successfully'
         }, 201
