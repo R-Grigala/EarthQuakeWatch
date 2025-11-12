@@ -1,0 +1,118 @@
+-- ✅ Create database using MariaDB-compatible collation
+CREATE DATABASE IF NOT EXISTS ies_geo_data
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_general_ci;
+USE ies_geo_data;
+
+-- ✅ Drop existing table if re-importing
+DROP TABLE IF EXISTS test_v_earthquakes;
+
+-- ✅ Create the table
+CREATE TABLE test_v_earthquakes (
+  `done`                     VARCHAR(16)    NULL,
+  `id`                       INT            NULL,
+  `seiscomp_parent_oid`      VARCHAR(128)   NULL,
+  `table_name`               VARCHAR(128)   NULL,
+  `mKEY`                     VARCHAR(128)   NULL,
+  `eq_key`                   VARCHAR(128)   NULL,
+  `origin_time`              DATETIME       NULL,
+  `origin_msec`              INT            NULL,
+  `time_uncertainty`         DOUBLE         NULL,
+  `latitude`                 DOUBLE         NULL,
+  `longitude`                DOUBLE         NULL,
+  `depth`                    DOUBLE         NULL,
+  `region_old`               VARCHAR(255)   NULL,
+  `region_ge`                VARCHAR(255)   NULL,
+  `region_en`                VARCHAR(255)   NULL,
+  `area`                     VARCHAR(128)   NULL,
+  `station_record_count`     INT            NULL,
+  `station_used_count`       INT            NULL,
+  `phases_count`             INT            NULL,
+  `phases_used_count`        INT            NULL,
+  `gap`                      DOUBLE         NULL,
+  `station_min_distance`     DOUBLE         NULL,
+  `epicenter_uncertainty`    DOUBLE         NULL,
+  `latitude_uncertainty`     DOUBLE         NULL,
+  `longitude_uncertainty`    DOUBLE         NULL,
+  `depth_uncertainty`        DOUBLE         NULL,
+  `intencity`                DOUBLE         NULL,
+  `vmId`                     INT            NULL,
+  `shake_source`             VARCHAR(64)    NULL,
+  `info_ge`                  TEXT           NULL,
+  `info_en`                  TEXT           NULL,
+  `important`                VARCHAR(8)     NULL,
+  `comment`                  TEXT           NULL,
+  `time_hypocenter_program`  VARCHAR(64)    NULL,
+  `creator_id`               INT            NULL,
+  `editor_id`                INT            NULL,
+  `last_edit_time`           DATETIME       NULL,
+  `eqId`                     VARCHAR(64)    NULL,
+  `ml`                       DOUBLE         NULL,
+  `ml_uncertainty`           DOUBLE         NULL,
+  `creator_fullname`         VARCHAR(255)   NULL,
+  `editor_fullname`          VARCHAR(255)   NULL
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+-- ✅ Enable local infile (once, optional)
+-- SET GLOBAL local_infile = 1;
+
+-- ✅ Load CSV data
+LOAD DATA LOCAL INFILE '/home/sysop/Clone/EarthQuakeWatch/v_earthquakes.csv'
+INTO TABLE test_v_earthquakes
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(@done,@id,@seiscomp_parent_oid,@table_name,@mKEY,@eq_key,
+ @origin_time,@origin_msec,@time_uncertainty,@latitude,@longitude,@depth,
+ @region_old,@region_ge,@region_en,@area,
+ @station_record_count,@station_used_count,@phases_count,@phases_used_count,
+ @gap,@station_min_distance,@epicenter_uncertainty,@latitude_uncertainty,
+ @longitude_uncertainty,@depth_uncertainty,@intencity,@vmId,@shake_source,
+ @info_ge,@info_en,@important,@comment,@time_hypocenter_program,
+ @creator_id,@editor_id,@last_edit_time,@eqId,@ml,@ml_uncertainty,
+ @creator_fullname,@editor_fullname)
+SET
+  `done`                    = NULLIF(@done,'NULL'),
+  `id`                      = NULLIF(@id,'NULL'),
+  `seiscomp_parent_oid`     = NULLIF(@seiscomp_parent_oid,'NULL'),
+  `table_name`              = NULLIF(@table_name,'NULL'),
+  `mKEY`                    = NULLIF(@mKEY,'NULL'),
+  `eq_key`                  = NULLIF(@eq_key,'NULL'),
+  `origin_time`             = STR_TO_DATE(NULLIF(@origin_time,'NULL'), '%Y-%m-%d %H:%i:%s'),
+  `origin_msec`             = NULLIF(@origin_msec,'NULL'),
+  `time_uncertainty`        = NULLIF(@time_uncertainty,'NULL'),
+  `latitude`                = NULLIF(@latitude,'NULL'),
+  `longitude`               = NULLIF(@longitude,'NULL'),
+  `depth`                   = NULLIF(@depth,'NULL'),
+  `region_old`              = NULLIF(@region_old,'NULL'),
+  `region_ge`               = NULLIF(@region_ge,'NULL'),
+  `region_en`               = NULLIF(@region_en,'NULL'),
+  `area`                    = NULLIF(@area,'NULL'),
+  `station_record_count`    = NULLIF(@station_record_count,'NULL'),
+  `station_used_count`      = NULLIF(@station_used_count,'NULL'),
+  `phases_count`            = NULLIF(@phases_count,'NULL'),
+  `phases_used_count`       = NULLIF(@phases_used_count,'NULL'),
+  `gap`                     = NULLIF(@gap,'NULL'),
+  `station_min_distance`    = NULLIF(@station_min_distance,'NULL'),
+  `epicenter_uncertainty`   = NULLIF(@epicenter_uncertainty,'NULL'),
+  `latitude_uncertainty`    = NULLIF(@latitude_uncertainty,'NULL'),
+  `longitude_uncertainty`   = NULLIF(@longitude_uncertainty,'NULL'),
+  `depth_uncertainty`       = NULLIF(@depth_uncertainty,'NULL'),
+  `intencity`               = NULLIF(@intencity,'NULL'),
+  `vmId`                    = NULLIF(@vmId,'NULL'),
+  `shake_source`            = NULLIF(@shake_source,'NULL'),
+  `info_ge`                 = NULLIF(@info_ge,'NULL'),
+  `info_en`                 = NULLIF(@info_en,'NULL'),
+  `important`               = NULLIF(@important,'NULL'),
+  `comment`                 = NULLIF(@comment,'NULL'),
+  `time_hypocenter_program` = NULLIF(@time_hypocenter_program,'NULL'),
+  `creator_id`              = NULLIF(@creator_id,'NULL'),
+  `editor_id`               = NULLIF(@editor_id,'NULL'),
+  `last_edit_time`          = STR_TO_DATE(NULLIF(@last_edit_time,'NULL'), '%Y-%m-%d %H:%i:%s'),
+  `eqId`                    = NULLIF(@eqId,'NULL'),
+  `ml`                      = NULLIF(@ml,'NULL'),
+  `ml_uncertainty`          = NULLIF(@ml_uncertainty,'NULL'),
+  `creator_fullname`        = NULLIF(@creator_fullname,'NULL'),
+  `editor_fullname`         = NULLIF(@editor_fullname,'NULL');
