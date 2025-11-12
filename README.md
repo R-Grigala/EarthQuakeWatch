@@ -32,7 +32,7 @@ It performs:
 ---
 
 ## 🧩 System Architecture
-<code>
+<code> ```text
 MySQL (Earthquake Catalog on RDS)
         ⬇  (Python Script / EventBridge Scheduler)
 DynamoDB (Operational DB)
