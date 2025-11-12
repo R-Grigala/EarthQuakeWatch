@@ -33,13 +33,13 @@ It performs:
 
 ## 🧩 System Architecture
 MySQL (Earthquake Catalog)
-        ⬇ (Hourly Python Script / Cloud Scheduler)
+        - (Hourly Python Script / Cloud Scheduler)
 Datastore (Operational DB)
-        ⬇ (Cloud Function ETL)
+        - (Cloud Function ETL)
 BigQuery (Analytics DB)
-        ⬇
+        -
 Flask API (App Engine)
-        ⬆
+        -
 Chart.js Dashboard (Visualization)
 
 
