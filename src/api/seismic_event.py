@@ -7,7 +7,15 @@ from src.models import SeismicEvent
 from src.config import Config
 
 @event_ns.route('/events')
-@event_ns.doc(responses={200: 'OK', 400: 'Invalid Argument', 401: 'JWT Token Expires', 403: 'Unauthorized', 404: 'Not Found'})
+@event_ns.doc(
+    responses={
+        200: 'OK',
+        201: 'Created',
+        400: 'Invalid Argument',
+        401: 'Unauthorized',
+        404: 'Not Found'
+    }
+)
 class SeismicListAPI(Resource):
     @event_ns.marshal_list_with(event_model)
     def get(self):
@@ -19,7 +27,7 @@ class SeismicListAPI(Resource):
         return events
 
     @event_ns.expect(event_model)
-    @event_ns.doc(security='ApiKeyAuth', responses={201: 'Created', 401: 'Unauthorized'})
+    @event_ns.doc(security='ApiKeyAuth')
     def post(self):
         """Add a new seismic event (requires API key)"""
         api_key = request.headers.get('X-API-Key')
@@ -29,7 +37,7 @@ class SeismicListAPI(Resource):
         # --- Parse request body ---
         args = event_parser.parse_args()
 
-        # --- Convert origin_time ---
+        # --- Convert origin_time to datetime ---
         try:
             origin_time = datetime.datetime.fromisoformat(args['origin_time'])
         except Exception:
@@ -40,7 +48,7 @@ class SeismicListAPI(Resource):
         if existing:
             return {'error': f'Event with ID {args["event_id"]} already exists.'}, 400
 
-        # --- Create a new SeismicEvent object ---
+        # --- Create and save event ---
         new_event = SeismicEvent(
             event_id=args['event_id'],
             seiscomp_oid=args.get('seiscomp_oid'),
@@ -53,6 +61,7 @@ class SeismicListAPI(Resource):
             region_en=args.get('region_en'),
             area=args.get('area')
         )
+        
         # --- Commit to database ---
         new_event.create()
 
