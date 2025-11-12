@@ -31,20 +31,6 @@ It performs:
 
 ---
 
-## 🧩 System Architecture
-<code> ```text
-MySQL (Earthquake Catalog on RDS)
-        ⬇  (Python Script / EventBridge Scheduler)
-DynamoDB (Operational DB)
-        ⬇  (AWS Lambda ETL)
-S3 + Athena (Analytics Layer)
-        ⬇
-Flask API (Elastic Beanstalk / ECS)
-        ⬆
-Chart.js / Plotly Dashboard (Visualization)
-</code>
----
-
 ## 🛠️ Tech Stack
 
 **Backend:**  
@@ -65,4 +51,18 @@ Chart.js / Plotly Dashboard (Visualization)
 
 **Visualization:**  
 - Chart.js / Plotly  
-- Jinja2 templates via Flask  
+- Jinja2 templates via Flask
+
+--- 
+
+## 🧩 System Architecture
+```text
+MySQL (Earthquake Catalog on RDS)
+        ⬇  (Python Script / EventBridge Scheduler)
+DynamoDB (Operational DB)
+        ⬇  (AWS Lambda ETL)
+S3 + Athena (Analytics Layer)
+        ⬇
+Flask API (Elastic Beanstalk / ECS)
+        ⬆
+Chart.js / Plotly Dashboard (Visualization)
