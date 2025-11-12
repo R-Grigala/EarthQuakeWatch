@@ -16,6 +16,7 @@ event_model = api.model('SeismicEvent', {
     'region_ge': fields.String(description='Region GE'),
     'region_en': fields.String(description='Region EN'),
     'area': fields.String(description='Area name'),
+    'created_at': fields.DateTime(description='Record creation timestamp (UTC)')
 })
 
 # Request Parser

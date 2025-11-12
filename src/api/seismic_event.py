@@ -17,7 +17,7 @@ from src.config import Config
     }
 )
 class SeismicListAPI(Resource):
-    @event_ns.marshal_list_with(event_model)
+    @event_ns.marshal_list_with(event_model)  # show schema in Swagger
     def get(self):
         """List all seismic events"""
         events = SeismicEvent.query.all()
@@ -27,7 +27,7 @@ class SeismicListAPI(Resource):
         return events
 
     @event_ns.expect(event_model)
-    @event_ns.doc(security='ApiKeyAuth')
+    @event_ns.doc(security='ApiKeyAuth', description='Add a new seismic event (requires X-API-Key)')
     def post(self):
         """Add a new seismic event (requires API key)"""
         api_key = request.headers.get('X-API-Key')
