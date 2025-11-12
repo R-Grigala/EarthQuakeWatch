@@ -32,8 +32,7 @@ It performs:
 ---
 
 ## 🧩 System Architecture
-
-```text
+<code>
 MySQL (Earthquake Catalog on RDS)
         ⬇  (Python Script / EventBridge Scheduler)
 DynamoDB (Operational DB)
@@ -43,7 +42,7 @@ S3 + Athena (Analytics Layer)
 Flask API (Elastic Beanstalk / ECS)
         ⬆
 Chart.js / Plotly Dashboard (Visualization)
-
+</code>
 ---
 
 ## 🛠️ Tech Stack
