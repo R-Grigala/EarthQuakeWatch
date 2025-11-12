@@ -33,11 +33,11 @@ It performs:
 
 ## 🧩 System Architecture
 MySQL (Earthquake Catalog)
-⬇ (Python Script / EventBridge Scheduler)
-DynamoDB (Operational DB)
-⬇ (AWS Lambda ETL)
-S3 + Athena (Analytics Layer)
-⬇
-Flask API (Elastic Beanstalk / ECS)
-⬆
-Chart.js / Plotly Dashboard (Visualization)
+        ⬇ (Hourly Python Script / Cloud Scheduler)
+Datastore (Operational DB)
+        ⬇ (Cloud Function ETL)
+BigQuery (Analytics DB)
+        ⬇
+Flask API (App Engine)
+        ⬆
+Chart.js Dashboard (Visualization)
