@@ -41,3 +41,28 @@ BigQuery (Analytics DB)
 Flask API (App Engine)
         ⬆
 Chart.js Dashboard (Visualization)
+
+
+---
+
+## 🛠️ Tech Stack
+
+**Backend:**  
+- Python, Flask-RESTx, SQLAlchemy  
+- boto3 (AWS SDK for Python)
+
+**Databases:**  
+- MySQL (source catalog, AWS RDS)  
+- DynamoDB (operational store)  
+- Amazon Athena / Redshift (analytics)
+
+**AWS Services:**  
+- Elastic Beanstalk (Flask API hosting)  
+- Lambda (ETL functions)  
+- EventBridge Scheduler (hourly jobs)  
+- S3 (data storage)  
+- SNS / SQS (optional message queues)
+
+**Visualization:**  
+- Chart.js / Plotly  
+- Jinja2 templates via Flask  
