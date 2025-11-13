@@ -13,11 +13,11 @@ log_filename = "export_events_from_db.log"
 logging.basicConfig(filename=log_filename , level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
 # მონაცემთა ბაზის პარამეტრები
-MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
-MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "ies_geo_data")
+MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
+MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "event_data")
 MYSQL_USER = os.getenv("MYSQL_USER", "root")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "Ml@Root88")
-TABLE_NAME = os.getenv("MYSQL_TABLE", "test_v_earthquakes")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "rootPassword")
+TABLE_NAME = os.getenv("MYSQL_TABLE", "test_earthquakes")
 
 # API env
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5000")
@@ -120,7 +120,7 @@ def post_event_to_api(event: dict):
             return True
         # retry only on 5xx
         if resp.status_code >= 500:
-            logging.warning(f"Server {resp.status_code} attempt: {resp.text}")
+            logging.warning(f"Server {resp.status_code}: {resp.text}")
         # 4xx (non-duplicate)
         logging.error(f"POST failed {resp.status_code}: {resp.text}")
         return False
