@@ -22,7 +22,7 @@ TABLE_NAME = os.getenv("MYSQL_TABLE", "test_earthquakes")
 # API env
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5000")
 API_KEY = os.getenv("API_KEY", "Z0PTBUfp6K5GsIQqQabKN4WxshnfbGy0")
-API_TIMEOUT = int(os.getenv("API_TIMEOUT", "15"))
+API_TIMEOUT = int(os.getenv("API_TIMEOUT", "10"))
 
 def connect_db():
     # მონაცემთა ბაზასთან კავშირის ტესტი
@@ -71,62 +71,75 @@ def fetch_new_events():
 
     finally:
         conn.close()
-
-def to_iso_utc_z(dt):
-    """
-    Convert a MySQL DATETIME (naive) to ISO-8601 Z string.
-    Assumes the stored value is already UTC. If it's local time, adjust before formatting.
-    """
-    if dt is None:
-        return None
-    if isinstance(dt, datetime):
-        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-    # try parse string
-    try:
-        parsed = datetime.fromisoformat(str(dt))
-        return parsed.strftime("%Y-%m-%dT%H:%M:%SZ")
-    except Exception:
-        return str(dt)
     
-def post_event_to_api(event: dict):
+def post_event_to_api(new_events):
     url = f"{API_BASE_URL.rstrip('/')}/api/events"
     headers = {
         "Content-Type": "application/json",
-        "X-API-Key": API_KEY
+        "X-API-Key": API_KEY,
     }
 
-    payload = {
-        "event_id": event.get("event_id"),
-        "seiscomp_oid": event.get("seiscomp_oid"),
-        "origin_time": to_iso_utc_z(event.get("origin_time")),
-        "origin_msec": event.get("origin_msec"),
-        "latitude": event.get("latitude"),
-        "longitude": event.get("longitude"),
-        "depth": event.get("depth"),
-        "region_ge": event.get("region_ge"),
-        "region_en": event.get("region_en"),
-        "area": event.get("area"),
-    }
+    sent, failed = 0, 0
 
-    # Basic retry
+    for event in new_events:
+        payload = {
+            "event_id": event["event_id"],
+            "seiscomp_oid": event.get("seiscomp_oid"),
+            "origin_time": event.get("origin_time_iso"),
+            "origin_msec": event.get("origin_msec"),
+            "latitude": event.get("latitude"),
+            "longitude": event.get("longitude"),
+            "depth": event.get("depth"),
+            "region_ge": event.get("region_ge"),
+            "region_en": event.get("region_en"),
+            "area": event.get("area"),
+        }
+
+        if send_event(url, payload, headers):
+            sent += 1
+        else:
+            failed += 1
+
+    logging.info(f"Finished sending events. sent={sent}, failed={failed}")
+
+def send_event(url, payload, headers):
     try:
         resp = requests.post(url, json=payload, headers=headers, timeout=API_TIMEOUT)
+
+        logging.info(
+            "POST %s -> status=%s, body=%s",
+            url, resp.status_code, resp.text
+        )
+
+        # success (create or update)
         if resp.status_code in (200, 201):
-            logging.info(f"POST OK id={payload['event_id']}")
+            logging.info(f"POST OK id={payload.get('event_id')}")
             return True
-        # treat duplicate as success to be idempotent
+
+        # treat duplicate as success to be idempotent (if your API returns such message)
         if resp.status_code == 400 and "already exists" in (resp.text or "").lower():
-            logging.info(f"Duplicate (skip) id={payload['event_id']}")
+            logging.info(f"Duplicate (skip) id={payload.get('event_id')}")
             return True
-        # retry only on 5xx
+
+        # 5xx → server problem
         if resp.status_code >= 500:
-            logging.warning(f"Server {resp.status_code}: {resp.text}")
-        # 4xx (non-duplicate)
+            logging.warning(f"Server error {resp.status_code}: {resp.text}")
+            return False
+
+        # 4xx (non-duplicate): client-side problem
         logging.error(f"POST failed {resp.status_code}: {resp.text}")
         return False
+
     except requests.RequestException as e:
-        logging.warning(f"POST failed : {e}")
+        logging.warning("POST exception: %s", e)
+        return False
+
 
 if __name__ == "__main__":
     new_events = fetch_new_events()
-    print(new_events)
+    if not new_events:
+        print("No new events to send.")
+        logging.info("No new events to send.")
+    else:
+        post_event_to_api(new_events)
+        print(f"Sent {len(new_events)} events.")
