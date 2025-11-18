@@ -60,7 +60,7 @@ class SeismicListAPI(Resource):
             exist_event.region_en = args.get('region_en')
             exist_event.area = args.get('area')
 
-            new_event.save()
+            exist_event.save()
             return {
                 'message': f'Seismic event {exist_event.event_id} updated successfully'
             }, 200
