@@ -28,5 +28,6 @@ def populate_db():
         region_ge="RegionGE",
         region_en="RegionEN",
         area="local",
+        ml=3.5
     )
     new_event.create()

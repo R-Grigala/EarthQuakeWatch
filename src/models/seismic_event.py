@@ -15,6 +15,7 @@ class SeismicEvent(db.Model, BaseModel):
     region_ge = db.Column(db.String(100))
     region_en = db.Column(db.String(100))
     area = db.Column(db.String(50))
+    ml = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):

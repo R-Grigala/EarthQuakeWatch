@@ -1,8 +1,18 @@
-2025-11-13 21:19:36,966 [INFO] მონაცემთა ბაზასთან კავშირი წარმატებით შესრულდა.
-2025-11-13 21:21:53,750 [INFO] მონაცემთა ბაზასთან კავშირი წარმატებით შესრულდა.
-2025-11-13 21:22:09,107 [INFO] მონაცემთა ბაზასთან კავშირი წარმატებით შესრულდა.
-2025-11-13 21:22:09,110 [INFO] Found 9 new events since 2022-02-12 15:18:03.338792+00:00
-2025-11-13 21:26:07,282 [INFO] მონაცემთა ბაზასთან კავშირი წარმატებით შესრულდა.
-2025-11-13 21:26:07,284 [INFO] Found 9 new events since 2022-02-12 15:18:03.338792+00:00
-2025-11-13 21:27:10,348 [INFO] მონაცემთა ბაზასთან კავშირი წარმატებით შესრულდა.
-2025-11-13 21:27:10,352 [INFO] Found 9 new events since 2022-02-12 15:18:03.338792+00:00
+2025-11-18 17:46:44,990 [INFO] Database connection successful.
+2025-11-18 17:46:44,991 [INFO] Found 3 new events since 2025-05-01 15:18:03.338792+00:00
+2025-11-18 17:46:45,000 [INFO] POST http://127.0.0.1:5000/api/events -> status=200, body={
+    "message": "Seismic event 9439 updated successfully"
+}
+
+2025-11-18 17:46:45,000 [INFO] POST OK id=9439
+2025-11-18 17:46:45,006 [INFO] POST http://127.0.0.1:5000/api/events -> status=200, body={
+    "message": "Seismic event 110360 updated successfully"
+}
+
+2025-11-18 17:46:45,006 [INFO] POST OK id=110360
+2025-11-18 17:46:45,012 [INFO] POST http://127.0.0.1:5000/api/events -> status=200, body={
+    "message": "Seismic event 110556 updated successfully"
+}
+
+2025-11-18 17:46:45,012 [INFO] POST OK id=110556
+2025-11-18 17:46:45,012 [INFO] Finished sending events. sent=3, failed=0

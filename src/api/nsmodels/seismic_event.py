@@ -1,7 +1,6 @@
 from flask_restx import reqparse, fields
 from src.extensions import api
 
-
 event_ns = api.namespace('Events', description='API endpoint for Seismic event operations', path='/api')
 
 # RESTX model for Swagger
@@ -16,6 +15,7 @@ event_model = api.model('SeismicEvent', {
     'region_ge': fields.String(description='Region GE'),
     'region_en': fields.String(description='Region EN'),
     'area': fields.String(description='Area name'),
+    'ml': fields.Float(required=True, description='Local Magnitude (ML)'),
     'created_at': fields.DateTime(description='Record creation timestamp (UTC)')
 })
 
@@ -31,3 +31,4 @@ event_parser.add_argument("depth", type=float, required=True, help="Depth is req
 event_parser.add_argument("region_ge", type=str, required=False, help="Region GE (optional)")
 event_parser.add_argument("region_en", type=str, required=False, help="Region EN (optional)")
 event_parser.add_argument("area", type=str, required=False, help="Area (optional)")
+event_parser.add_argument("ml", type=float, required=True, help="Local Magnitude (ML)")

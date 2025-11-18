@@ -49,8 +49,9 @@ def fetch_new_events():
     Fetch seismic events edited within the last 1 hour
     Returns list of dictionaries containing event data
     """
-    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-    # one_hour_ago = "2025-05-01 15:18:03.338792+00:00"
+    # one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+    MIN_MAGNITUDE = 3
+    one_hour_ago = "2025-05-01 15:18:03.338792+00:00"
 
     SQL_QUERY = f"""
         SELECT 
@@ -63,15 +64,16 @@ def fetch_new_events():
             depth,
             region_ge,
             region_en,
-            area
+            area,
+            ml
         FROM {TABLE_NAME}
-        WHERE last_edit_time >= %s;
+        WHERE last_edit_time >= %s AND ml > %s;
     """
 
     conn = connect_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(SQL_QUERY, (one_hour_ago,))
+            cursor.execute(SQL_QUERY, (one_hour_ago, MIN_MAGNITUDE))
             results = cursor.fetchall()
             logging.info(f"Found {len(results)} new events since {one_hour_ago}")
             return results
@@ -94,16 +96,17 @@ def post_event_to_api(new_events):
     for event in new_events:
         # Build payload from event data
         payload = {
-            "event_id": event[0],
-            "seiscomp_oid": event[1],
-            "origin_time": event[2].isoformat() if event[2] else None,
-            "origin_msec": event[3],
-            "latitude": event[4],
-            "longitude": event[5],
-            "depth": event[6],
-            "region_ge": event[7],
-            "region_en": event[8],
-            "area": event[9],
+            "event_id": event["event_id"],
+            "seiscomp_oid": event.get("seiscomp_oid"),
+            "origin_time": event["origin_time"].isoformat() if event.get("origin_time") else None,
+            "origin_msec": event.get("origin_msec"),
+            "latitude": event.get("latitude"),
+            "longitude": event.get("longitude"),
+            "depth": event.get("depth"),
+            "region_ge": event.get("region_ge"),
+            "region_en": event.get("region_en"),
+            "area": event.get("area"),
+            "ml": event.get("ml")
         }
 
         if send_event(url, payload, headers):
@@ -154,7 +157,7 @@ def send_event(url, payload, headers):
 if __name__ == "__main__":
     # Fetch new events from database
     new_events = fetch_new_events()
-    
+    # print(new_events)
     if not new_events:
         print("No new events to send.")
         logging.info("No new events to send.")  

@@ -59,6 +59,7 @@ class SeismicListAPI(Resource):
             exist_event.region_ge = args.get('region_ge')
             exist_event.region_en = args.get('region_en')
             exist_event.area = args.get('area')
+            exist_event.ml = args.get('ml')
 
             exist_event.save()
             return {
@@ -77,7 +78,8 @@ class SeismicListAPI(Resource):
                 depth=args['depth'],
                 region_ge=args.get('region_ge'),
                 region_en=args.get('region_en'),
-                area=args.get('area')
+                area=args.get('area'),
+                ml=args.get('ml')
             )
             new_event.create()
 
