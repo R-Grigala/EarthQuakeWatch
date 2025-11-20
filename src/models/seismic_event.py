@@ -11,7 +11,7 @@ class SeismicEvent(db.Model, BaseModel):
     origin_msec = db.Column(db.Integer)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
-    depth = db.Column(db.Float, nullable=False)
+    depth = db.Column(db.Float, nullable=True)
     region_ge = db.Column(db.String(100))
     region_en = db.Column(db.String(100))
     area = db.Column(db.String(50))

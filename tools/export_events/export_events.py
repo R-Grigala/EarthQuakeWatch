@@ -49,9 +49,8 @@ def fetch_new_events():
     Fetch seismic events edited within the last 1 hour
     Returns list of dictionaries containing event data
     """
-    # one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
-    MIN_MAGNITUDE = 3
-    one_hour_ago = "2025-05-01 15:18:03.338792+00:00"
+    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+    MIN_MAGNITUDE = 2.5
 
     SQL_QUERY = f"""
         SELECT 
@@ -95,13 +94,28 @@ def post_event_to_api(new_events):
 
     for event in new_events:
         # Build payload from event data
+
+        event_id = event.get("event_id")
+
+        lat = event.get("latitude")
+        lon = event.get("longitude")
+        
+        # Skip if any of the required fields is None
+        if lat is None or lon is None :
+            failed += 1
+            logging.warning(
+                f"Skipping event {event_id} due to missing coordinates: "
+                f"lat={lat}, lon={lon}"
+            )
+            continue
+            
         payload = {
             "event_id": event["event_id"],
             "seiscomp_oid": event.get("seiscomp_oid"),
             "origin_time": event["origin_time"].isoformat() if event.get("origin_time") else None,
             "origin_msec": event.get("origin_msec"),
-            "latitude": event.get("latitude"),
-            "longitude": event.get("longitude"),
+            "latitude": lat,
+            "longitude": lon,
             "depth": event.get("depth"),
             "region_ge": event.get("region_ge"),
             "region_en": event.get("region_en"),
