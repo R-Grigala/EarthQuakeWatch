@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}EarthQuakeWatch | Dashboard{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h1 class="h3 mb-1">Dashboard</h1>
+      <div class="text-muted small">
+        Live data from <code id="statsUrlLabel"></code> and <code id="eventsUrlLabel"></code>
+      </div>
+    </div>
+    <div class="text-muted small">
+      Events Updated: <span id="lastUpdated">—</span>
+      <span class="mx-2">•</span>
+      Total Events: <span id="totalEvents">—</span>
+    </div>
+  </div>
+
+  <!-- Error box -->
+  <div id="errBox" class="alert alert-danger d-none" role="alert"></div>
+
+  <!-- Stats cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Last 24h</div>
+          <div class="d-flex justify-content-between align-items-end">
+            <div class="h4 mb-0"><span id="c24">0</span> events</div>
+            <div class="text-end">
+              <div class="text-muted small">Max ML</div>
+              <div class="h5 mb-0" id="max24">—</div>
+            </div>
+          </div>
+          <div class="text-muted small mt-2">Avg ML: <span id="avg24">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Last 7d</div>
+          <div class="d-flex justify-content-between align-items-end">
+            <div class="h4 mb-0"><span id="c7">0</span> events</div>
+            <div class="text-end">
+              <div class="text-muted small">Avg ML</div>
+              <div class="h5 mb-0" id="avg7">—</div>
+            </div>
+          </div>
+          <div class="text-muted small mt-2">Window: 7 days</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted small">Last 1y</div>
+          <div class="d-flex justify-content-between align-items-end">
+            <div class="h4 mb-0"><span id="c1y">0</span> events</div>
+            <div class="text-end">
+              <div class="text-muted small">Max ML</div>
+              <div class="h5 mb-0" id="max1y">—</div>
+            </div>
+          </div>
+          <div class="text-muted small mt-2">Avg ML: <span id="avg1y">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">Stats Overview</h2>
+            <span class="badge text-bg-light">24h / 7d / 1y</span>
+          </div>
+          <canvas id="statsBar" height="120"></canvas>
+          <div class="text-muted small mt-2" id="statsText"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">Magnitude Trend</h2>
+            <span class="badge text-bg-light">Recent events</span>
+          </div>
+          <canvas id="magLine" height="120"></canvas>
+          <div class="text-muted small mt-2">
+            Uses latest events from the events endpoint.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Events table -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h2 class="h6 mb-0">Recent Events</h2>
+        <span class="text-muted small">Showing last 50</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Time (UTC)</th>
+              <th>ML</th>
+              <th>Depth (km)</th>
+              <th>Lat</th>
+              <th>Lon</th>
+              <th>Region</th>
+            </tr>
+          </thead>
+          <tbody id="eventsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Config passed from Flask (change these if your API is /api/...) -->
+  <script>
+    window.DASH_CONFIG = {
+      statsUrl: "{{ stats_url|default('/api/stats') }}",
+      eventsUrl: "{{ events_url|default('/api/events') }}",
+      apiKey: "{{ api_key|default('') }}"
+    };
+  </script>
+
+  <script src="{{ url_for('static', filename='js/dashboard/dashboard.js') }}"></script>
+{% endblock %}

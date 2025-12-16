@@ -1,0 +1,1 @@
+from src.views.dashboard.routes import dashboard_blueprint

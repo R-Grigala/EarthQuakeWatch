@@ -6,7 +6,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 
 # Load environment variables
-load_dotenv('../../.env')
+load_dotenv('.env')
 
 # Configure logging
 LOG_FILENAME = 'export_events_from_db.log'
@@ -167,15 +167,17 @@ def send_event(url, payload, headers):
         logging.warning("POST exception: %s", e)
         return False
 
-
-if __name__ == "__main__":
+def export_events():
     # Fetch new events from database
     new_events = fetch_new_events()
     # print(new_events)
     if not new_events:
-        print("No new events to send.")
+        # print("No new events to send.")
         logging.info("No new events to send.")  
     else:
         # Send events to API
         post_event_to_api(new_events)
         print(f"Sent {len(new_events)} events.")
+
+if __name__ == "__main__":
+    export_events()

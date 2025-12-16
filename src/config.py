@@ -11,7 +11,7 @@ class Config:
     # Base directory
     BASE_DIR = path.abspath(path.dirname(__file__) + sep + pardir)
     # Templates
-    TEMPLATES_FOLDER = path.join(BASE_DIR, 'src', 'templates')
+    TEMPLATES_FOLDERS = path.join(BASE_DIR, 'src', 'templates')
     # SQLAlchemy
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # Default: SQLite (local dev)

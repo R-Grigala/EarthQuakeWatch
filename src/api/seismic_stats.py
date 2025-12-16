@@ -17,26 +17,61 @@ from src.extensions import db
 class SeismicStatsAPI(Resource):
     @stats_ns.marshal_with(stats_model)
     def get(self):
-        """Basic statistics for seismic events (24h / 7d)"""
+        """Basic statistics for seismic events (24h / 7d / 1y)"""
+
         now = datetime.now(timezone.utc)
-        last_24h = now - timedelta(hours=24)
-        last_7d = now - timedelta(days=7)
 
-        # ბოლო 24 საათი
-        q24 = SeismicEvent.query.filter(SeismicEvent.origin_time >= last_24h)
-        count_24 = q24.count()
-        avg_ml_24 = db.session.query(db.func.avg(SeismicEvent.ml)).filter(SeismicEvent.origin_time >= last_24h).scalar()
-        max_ml_24 = db.session.query(db.func.max(SeismicEvent.ml)).filter(SeismicEvent.origin_time >= last_24h).scalar()
+        windows = {
+            "24h": now - timedelta(hours=24),
+            "7d": now - timedelta(days=7),
+            "1y": now - timedelta(days=365),
+        }
 
-        # ბოლო 7 დღე
-        q7 = SeismicEvent.query.filter(SeismicEvent.origin_time >= last_7d)
-        count_7 = q7.count()
-        avg_ml_7 = db.session.query(db.func.avg(SeismicEvent.ml)).filter(SeismicEvent.origin_time >= last_7d).scalar()
+        stats = {}
+
+        for key, since in windows.items():
+            q = SeismicEvent.query.filter(SeismicEvent.origin_time >= since)
+
+            count = q.count()
+
+            avg_ml = (
+                db.session
+                .query(db.func.avg(SeismicEvent.ml))
+                .filter(SeismicEvent.origin_time >= since)
+                .scalar()
+            )
+
+            max_ml = (
+                db.session
+                .query(db.func.max(SeismicEvent.ml))
+                .filter(SeismicEvent.origin_time >= since)
+                .scalar()
+            )
+
+            stats[key] = {
+                "count": count or 0,
+                "avg_ml": float(avg_ml) if avg_ml is not None else 0,
+                "max_ml": float(max_ml) if max_ml is not None else 0,
+            }
+
+        # Total events in DB
+        total_events = db.session.query(db.func.count(SeismicEvent.event_id)).scalar() or 0
+
+        # Updated timestamp from last inserted row (created_at)
+        updated_utc = db.session.query(db.func.max(SeismicEvent.created_at)).scalar()
 
         return {
-            "count_last_24h": count_24 or 0,
-            "avg_ml_last_24h": float(avg_ml_24) if avg_ml_24 is not None else None,
-            "max_ml_last_24h": float(max_ml_24) if max_ml_24 is not None else None,
-            "count_last_7d": count_7 or 0,
-            "avg_ml_last_7d": float(avg_ml_7) if avg_ml_7 is not None else None,
+            "count_last_24h": stats["24h"]["count"],
+            "avg_ml_last_24h": stats["24h"]["avg_ml"],
+            "max_ml_last_24h": stats["24h"]["max_ml"],
+
+            "count_last_7d": stats["7d"]["count"],
+            "avg_ml_last_7d": stats["7d"]["avg_ml"],
+
+            "count_last_1y": stats["1y"]["count"],
+            "avg_ml_last_1y": stats["1y"]["avg_ml"],
+            "max_ml_last_1y": stats["1y"]["max_ml"],
+
+            "total_events": int(total_events),
+            "updated_utc": updated_utc,
         }, 200

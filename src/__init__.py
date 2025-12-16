@@ -1,16 +1,18 @@
 from flask import Flask, render_template
-# from flask_cors import CORS
+from flask_cors import CORS
 
 from src.config import Config
 from src.api import api
 from src.commands import init_db, populate_db
+from src.views import dashboard_blueprint
 from src.extensions import db, api, migrate
 
+BLUEPRINTS = [dashboard_blueprint]
 COMMANDS = [init_db, populate_db]
 
 def create_app(config=Config):
     app = Flask(__name__)
-    # CORS(app)
+    CORS(app)
     app.config.from_object(config)
 
     @app.route('/')
@@ -18,7 +20,7 @@ def create_app(config=Config):
         return render_template('index.html')
 
     register_extensions(app)
-    # register_blueprints(app)
+    register_blueprints(app)
     register_commands(app)
 
     # Register error handlers
@@ -37,6 +39,10 @@ def register_extensions(app):
 
     # Flask-restX
     api.init_app(app)
+
+def register_blueprints(app):
+    for blueprint in BLUEPRINTS:
+        app.register_blueprint(blueprint)
 
 
 def register_commands(app):
