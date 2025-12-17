@@ -1,5 +1,5 @@
 from flask_apscheduler import APScheduler
-from export_events.export_events import export_events
+from export_events.export_events import main
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 import logging
 from logging.handlers import RotatingFileHandler
@@ -28,7 +28,7 @@ def start_scheduler():
     scheduler = APScheduler()
 
     # # every hour at :00
-    scheduler.add_job(id='export_events', func=export_events, trigger='cron', minute=0)
+    scheduler.add_job(id='export_events', func=main, trigger='cron', minute=0)
     
     # Add listeners for job execution and errors
     scheduler.add_listener(job_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
