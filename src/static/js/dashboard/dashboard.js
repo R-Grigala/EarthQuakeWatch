@@ -16,12 +16,6 @@
     return n.toFixed(digits);
   }
 
-  function toUtcLabel(isoString) {
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return isoString;
-    return d.toISOString().replace("T", " ").slice(0, 19);
-  }
-
   function showError(msg) {
     const box = $("errBox");
     if (!box) return;
@@ -75,7 +69,7 @@
     if ($("avg1y")) $("avg1y").textContent = fmt(s.avg_ml_last_1y);
     if ($("max1y")) $("max1y").textContent = fmt(s.max_ml_last_1y);
 
-    if ($("lastUpdated")) $("lastUpdated").textContent = s.updated_utc ? toUtcLabel(s.updated_utc) : "—";
+    if ($("lastUpdated")) $("lastUpdated").textContent = s.updated_utc ?? "—";
     if ($("totalEvents")) $("totalEvents").textContent = s.total_events ?? "—";
 
     const labels = [
@@ -142,7 +136,7 @@
       for (const e of latest) {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td class="text-nowrap">${toUtcLabel(e.time)}</td>
+          <td class="text-nowrap">${e.time ?? "—"}</td>
           <td>${e.ml ?? "—"}</td>
           <td>${e.depth ?? "—"}</td>
           <td>${e.lat ?? "—"}</td>
@@ -156,7 +150,7 @@
       .sort((a, b) => new Date(a.time) - new Date(b.time))
       .slice(-80);
 
-    const lineLabels = lastN.map(x => toUtcLabel(x.time).slice(0, 11));
+    const lineLabels = lastN.map(x => (x.time).slice(0, 10));
     const lineData = lastN.map(x => (x.ml === null || x.ml === undefined) ? null : Number(x.ml));
 
     const ctx = $("magLine");
