@@ -24,12 +24,14 @@
 
   function showError(msg) {
     const box = $("errBox");
+    if (!box) return;
     box.classList.remove("d-none");
     box.textContent = msg;
   }
 
   function clearError() {
     const box = $("errBox");
+    if (!box) return;
     box.classList.add("d-none");
     box.textContent = "";
   }
@@ -58,51 +60,64 @@
   async function loadStats() {
     const s = await fetchJSON(STATS_URL);
 
-    $("c24").textContent = s.count_last_24h ?? 0;
-    $("avg24").textContent = fmt(s.avg_ml_last_24h);
-    $("max24").textContent = fmt(s.max_ml_last_24h);
+    // 1 month
+    if ($("c1m")) $("c1m").textContent = s.count_last_1m ?? 0;
+    if ($("avg1m")) $("avg1m").textContent = fmt(s.avg_ml_last_1m);
+    if ($("max1m")) $("max1m").textContent = fmt(s.max_ml_last_1m);
 
-    $("c7").textContent = s.count_last_7d ?? 0;
-    $("avg7").textContent = fmt(s.avg_ml_last_7d);
+    // 6 months
+    if ($("c6m")) $("c6m").textContent = s.count_last_6m ?? 0;
+    if ($("avg6m")) $("avg6m").textContent = fmt(s.avg_ml_last_6m);
+    if ($("max6m")) $("max6m").textContent = fmt(s.max_ml_last_6m);
 
-    $("c1y").textContent = s.count_last_1y ?? 0;
-    $("avg1y").textContent = fmt(s.avg_ml_last_1y);
-    $("max1y").textContent = fmt(s.max_ml_last_1y);
-    $("lastUpdated").textContent = s.updated_utc ?? "—";
-    $("totalEvents").textContent = s.total_events ?? "—";
+    // 1 year
+    if ($("c1y")) $("c1y").textContent = s.count_last_1y ?? 0;
+    if ($("avg1y")) $("avg1y").textContent = fmt(s.avg_ml_last_1y);
+    if ($("max1y")) $("max1y").textContent = fmt(s.max_ml_last_1y);
+
+    if ($("lastUpdated")) $("lastUpdated").textContent = s.updated_utc ? toUtcLabel(s.updated_utc) : "—";
+    if ($("totalEvents")) $("totalEvents").textContent = s.total_events ?? "—";
 
     const labels = [
-      "Count 24h", "Avg 24h", "Max 24h",
-      "Count 7d", "Avg 7d",
+      "Count 1m", "Avg 1m", "Max 1m",
+      "Count 6m", "Avg 6m", "Max 6m",
       "Count 1y", "Avg 1y", "Max 1y",
     ];
+
     const values = [
-      s.count_last_24h ?? 0,
-      s.avg_ml_last_24h ?? 0,
-      s.max_ml_last_24h ?? 0,
-      s.count_last_7d ?? 0,
-      s.avg_ml_last_7d ?? 0,
+      s.count_last_1m ?? 0,
+      s.avg_ml_last_1m ?? 0,
+      s.max_ml_last_1m ?? 0,
+
+      s.count_last_6m ?? 0,
+      s.avg_ml_last_6m ?? 0,
+      s.max_ml_last_6m ?? 0,
+
       s.count_last_1y ?? 0,
       s.avg_ml_last_1y ?? 0,
       s.max_ml_last_1y ?? 0,
     ];
 
     const ctx = $("statsBar");
-    if (statsChart) statsChart.destroy();
-    statsChart = new Chart(ctx, {
-      type: "bar",
-      data: { labels, datasets: [{ label: "Stats", data: values }] },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
-      }
-    });
+    if (ctx) {
+      if (statsChart) statsChart.destroy();
+      statsChart = new Chart(ctx, {
+        type: "bar",
+        data: { labels, datasets: [{ label: "Stats", data: values }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
 
-    $("statsText").textContent =
-      `24h: count=${s.count_last_24h ?? 0}, avg=${fmt(s.avg_ml_last_24h)}, max=${fmt(s.max_ml_last_24h)} | ` +
-      `7d: count=${s.count_last_7d ?? 0}, avg=${fmt(s.avg_ml_last_7d)} | ` +
-      `1y: count=${s.count_last_1y ?? 0}, avg=${fmt(s.avg_ml_last_1y)}, max=${fmt(s.max_ml_last_1y)}`;
+    if ($("statsText")) {
+      $("statsText").textContent =
+        `1m: count=${s.count_last_1m ?? 0}, avg=${fmt(s.avg_ml_last_1m)}, max=${fmt(s.max_ml_last_1m)} | ` +
+        `6m: count=${s.count_last_6m ?? 0}, avg=${fmt(s.avg_ml_last_6m)}, max=${fmt(s.max_ml_last_6m)} | ` +
+        `1y: count=${s.count_last_1y ?? 0}, avg=${fmt(s.avg_ml_last_1y)}, max=${fmt(s.max_ml_last_1y)}`;
+    }
   }
 
   async function loadEvents() {
@@ -114,31 +129,29 @@
       ml: e.ml,
       depth: e.depth_km ?? e.depth,
       lat: e.lat ?? e.latitude,
-      lon: e.lon ?? e.longitude,
-      region: e.region ?? e.place ?? ""
+      lon: e.lon ?? e.longitude
     })).filter(x => x.time);
 
-    // Table: latest 50 (desc)
     const latest = [...normalized]
       .sort((a, b) => new Date(b.time) - new Date(a.time))
       .slice(0, 50);
 
     const tbody = $("eventsBody");
-    tbody.innerHTML = "";
-    for (const e of latest) {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="text-nowrap">${toUtcLabel(e.time)}</td>
-        <td>${e.ml ?? "—"}</td>
-        <td>${e.depth ?? "—"}</td>
-        <td>${e.lat ?? "—"}</td>
-        <td>${e.lon ?? "—"}</td>
-        <td>${e.region || "—"}</td>
-      `;
-      tbody.appendChild(tr);
+    if (tbody) {
+      tbody.innerHTML = "";
+      for (const e of latest) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="text-nowrap">${toUtcLabel(e.time)}</td>
+          <td>${e.ml ?? "—"}</td>
+          <td>${e.depth ?? "—"}</td>
+          <td>${e.lat ?? "—"}</td>
+          <td>${e.lon ?? "—"}</td>
+        `;
+        tbody.appendChild(tr);
+      }
     }
 
-    // Line chart: last N points ascending
     const lastN = [...normalized]
       .sort((a, b) => new Date(a.time) - new Date(b.time))
       .slice(-80);
@@ -147,16 +160,18 @@
     const lineData = lastN.map(x => (x.ml === null || x.ml === undefined) ? null : Number(x.ml));
 
     const ctx = $("magLine");
-    if (magChart) magChart.destroy();
-    magChart = new Chart(ctx, {
-      type: "line",
-      data: { labels: lineLabels, datasets: [{ label: "ML", data: lineData, spanGaps: true }] },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: true } },
-        scales: { y: { beginAtZero: false } }
-      }
-    });
+    if (ctx) {
+      if (magChart) magChart.destroy();
+      magChart = new Chart(ctx, {
+        type: "line",
+        data: { labels: lineLabels, datasets: [{ label: "ML", data: lineData, spanGaps: true }] },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: true } },
+          scales: { y: { beginAtZero: false } }
+        }
+      });
+    }
   }
 
   async function refreshAll() {
@@ -164,7 +179,6 @@
     await Promise.all([loadStats(), loadEvents()]);
   }
 
-  // Labels on page
   if ($("statsUrlLabel")) $("statsUrlLabel").textContent = STATS_URL;
   if ($("eventsUrlLabel")) $("eventsUrlLabel").textContent = EVENTS_URL;
 

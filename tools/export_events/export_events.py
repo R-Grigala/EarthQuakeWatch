@@ -5,25 +5,26 @@ import logging
 import requests
 from datetime import datetime, timezone, timedelta
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv('.env')
 
-# Database parameters
+# MySQL configuration
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "event_data")
 MYSQL_USER = os.getenv("MYSQL_USER", "root")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "rootPassword")
 TABLE_NAME = os.getenv("MYSQL_TABLE", "test_earthquakes")
 
-# API environment variables
+# API configuration
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:5000")
 API_KEY = os.getenv("API_KEY", "Z0PTBUfp6K5GsIQqQabKN4WxshnfbGy0")
 API_TIMEOUT = int(os.getenv("API_TIMEOUT", "10"))
 
+
 def connect_db():
     """
-    Establish connection to MySQL database
-    Returns connection object if successful, raises exception otherwise
+    Create and return a MySQL database connection.
+    Raises an exception if the connection fails.
     """
     try:
         connection = pymysql.connect(
@@ -34,21 +35,23 @@ def connect_db():
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor
         )
-        logging.info("Database connection successful.")
+        logging.info("Database connection established")
         return connection
     except pymysql.MySQLError as e:
-        logging.error(f"Database connection failed: {e}")
-        raise  # Re-raise exception to stop program execution
+        logging.error("Database connection failed: %s", e)
+        raise
+
 
 def fetch_new_events():
     """
-    Fetch seismic events edited within the last 1 hour
-    Returns list of dictionaries containing event data
+    Fetch seismic events updated within the last 7 days
+    and above the minimum magnitude threshold.
+    Returns a list of event dictionaries.
     """
-    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+    since_time = datetime.now(timezone.utc) - timedelta(days=7)
     MIN_MAGNITUDE = 2.5
 
-    SQL_QUERY = f"""
+    sql = f"""
         SELECT 
             id AS event_id,
             seiscomp_parent_oid AS seiscomp_oid,
@@ -62,23 +65,28 @@ def fetch_new_events():
             area,
             ml
         FROM {TABLE_NAME}
-        WHERE last_edit_time >= %s AND ml > %s;
+        WHERE last_edit_time >= %s
+          AND ml > %s;
     """
 
     conn = connect_db()
     try:
         with conn.cursor() as cursor:
-            cursor.execute(SQL_QUERY, (one_hour_ago, MIN_MAGNITUDE))
+            cursor.execute(sql, (since_time, MIN_MAGNITUDE))
             results = cursor.fetchall()
-            logging.info(f"Found {len(results)} new events since {one_hour_ago}")
+            logging.info(
+                "Fetched %d events updated since %s",
+                len(results), since_time
+            )
             return results
     finally:
         conn.close()
-    
-def post_event_to_api(new_events):
+
+
+def post_event_to_api(events):
     """
-    Send multiple seismic events to the API endpoint
-    Iterates through events and tracks success/failure count
+    Send a list of seismic events to the REST API.
+    Tracks successful and failed transmissions.
     """
     url = f"{API_BASE_URL.rstrip('/')}/api/events"
     headers = {
@@ -88,27 +96,26 @@ def post_event_to_api(new_events):
 
     sent, failed = 0, 0
 
-    for event in new_events:
-        # Build payload from event data
-
+    for event in events:
         event_id = event.get("event_id")
-
         lat = event.get("latitude")
         lon = event.get("longitude")
-        
-        # Skip if any of the required fields is None
-        if lat is None or lon is None :
+
+        # Skip events without coordinates
+        if lat is None or lon is None:
             failed += 1
             logging.warning(
-                f"Skipping event {event_id} due to missing coordinates: "
-                f"lat={lat}, lon={lon}"
+                "Skipping event %s due to missing coordinates (lat=%s, lon=%s)",
+                event_id, lat, lon
             )
             continue
-            
+
+        # Build API payload
         payload = {
-            "event_id": event["event_id"],
+            "event_id": event_id,
             "seiscomp_oid": event.get("seiscomp_oid"),
-            "origin_time": event["origin_time"].isoformat() if event.get("origin_time") else None,
+            "origin_time": event["origin_time"].isoformat()
+            if event.get("origin_time") else None,
             "origin_msec": event.get("origin_msec"),
             "latitude": lat,
             "longitude": lon,
@@ -116,7 +123,7 @@ def post_event_to_api(new_events):
             "region_ge": event.get("region_ge"),
             "region_en": event.get("region_en"),
             "area": event.get("area"),
-            "ml": event.get("ml")
+            "ml": event.get("ml"),
         }
 
         if send_event(url, payload, headers):
@@ -124,56 +131,65 @@ def post_event_to_api(new_events):
         else:
             failed += 1
 
-    logging.info(f"Finished sending events. sent={sent}, failed={failed}")
+    logging.info("Event sending completed: sent=%d, failed=%d", sent, failed)
+
 
 def send_event(url, payload, headers):
     """
-    Send a single event to the API
-    Returns True if successful, False otherwise
-    Handles retries and various HTTP status codes
+    Send a single seismic event to the API.
+    Returns True on success, False on failure.
     """
     try:
-        resp = requests.post(url, json=payload, headers=headers, timeout=API_TIMEOUT)
-
-        logging.info(
-            "POST %s -> status=%s, body=%s",
-            url, resp.status_code, resp.text
+        response = requests.post(
+            url,
+            json=payload,
+            headers=headers,
+            timeout=API_TIMEOUT
         )
 
-        # Success (create or update)
-        if resp.status_code in (200, 201):
-            logging.info(f"POST OK id={payload.get('event_id')}")
+        logging.info(
+            "POST %s | status=%s | response=%s",
+            url, response.status_code, response.text
+        )
+
+        # Success: created or updated
+        if response.status_code in (200, 201):
             return True
 
-        # Treat duplicate as success to be idempotent (if API returns such message)
-        if resp.status_code == 400 and "already exists" in (resp.text or "").lower():
-            logging.info(f"Duplicate (skip) id={payload.get('event_id')}")
+        # Idempotent handling for duplicates
+        if response.status_code == 400 and "already exists" in response.text.lower():
+            logging.info("Duplicate event ignored (id=%s)", payload.get("event_id"))
             return True
 
-        # 5xx → server problem
-        if resp.status_code >= 500:
-            logging.warning(f"Server error {resp.status_code}: {resp.text}")
+        # Server-side error
+        if response.status_code >= 500:
+            logging.warning("Server error %s", response.status_code)
             return False
 
-        # 4xx (non-duplicate): client-side problem
-        logging.error(f"POST failed {resp.status_code}: {resp.text}")
+        # Client-side error
+        logging.error("Request failed %s: %s", response.status_code, response.text)
         return False
 
     except requests.RequestException as e:
-        logging.warning("POST exception: %s", e)
+        logging.warning("Request exception: %s", e)
         return False
 
+
 def main():
-    # Fetch new events from database
-    new_events = fetch_new_events()
-    # print(new_events)
-    if not new_events:
-        # print("No new events to send.")
-        logging.info("No new events to send.")  
-    else:
-        # Send events to API
-        post_event_to_api(new_events)
-        print(f"Sent {len(new_events)} events.")
+    """
+    Main execution flow:
+    1. Fetch updated events from MySQL
+    2. Send them to the REST API
+    """
+    events = fetch_new_events()
+
+    if not events:
+        logging.info("No new events to send")
+        return
+
+    post_event_to_api(events)
+    print(f"Processed {len(events)} events")
+
 
 if __name__ == "__main__":
     main()

@@ -24,38 +24,41 @@
 
   <!-- Stats cards -->
   <div class="row g-3 mb-4">
+    <!-- 1 month -->
     <div class="col-md-4">
       <div class="card shadow-sm">
         <div class="card-body">
-          <div class="text-muted small">Last 24h</div>
+          <div class="text-muted small">Last 1m</div>
           <div class="d-flex justify-content-between align-items-end">
-            <div class="h4 mb-0"><span id="c24">0</span> events</div>
+            <div class="h4 mb-0"><span id="c1m">0</span> events</div>
             <div class="text-end">
               <div class="text-muted small">Max ML</div>
-              <div class="h5 mb-0" id="max24">—</div>
+              <div class="h5 mb-0" id="max1m">—</div>
             </div>
           </div>
-          <div class="text-muted small mt-2">Avg ML: <span id="avg24">—</span></div>
+          <div class="text-muted small mt-2">Avg ML: <span id="avg1m">—</span></div>
         </div>
       </div>
     </div>
 
+    <!-- 6 months -->
     <div class="col-md-4">
       <div class="card shadow-sm">
         <div class="card-body">
-          <div class="text-muted small">Last 7d</div>
+          <div class="text-muted small">Last 6m</div>
           <div class="d-flex justify-content-between align-items-end">
-            <div class="h4 mb-0"><span id="c7">0</span> events</div>
+            <div class="h4 mb-0"><span id="c6m">0</span> events</div>
             <div class="text-end">
-              <div class="text-muted small">Avg ML</div>
-              <div class="h5 mb-0" id="avg7">—</div>
+              <div class="text-muted small">Max ML</div>
+              <div class="h5 mb-0" id="max6m">—</div>
             </div>
           </div>
-          <div class="text-muted small mt-2">Window: 7 days</div>
+          <div class="text-muted small mt-2">Avg ML: <span id="avg6m">—</span></div>
         </div>
       </div>
     </div>
 
+    <!-- 1 year -->
     <div class="col-md-4">
       <div class="card shadow-sm">
         <div class="card-body">
@@ -80,7 +83,7 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h2 class="h6 mb-0">Stats Overview</h2>
-            <span class="badge text-bg-light">24h / 7d / 1y</span>
+            <span class="badge text-bg-light">1m / 6m / 1y</span>
           </div>
           <canvas id="statsBar" height="120"></canvas>
           <div class="text-muted small mt-2" id="statsText"></div>
@@ -121,7 +124,6 @@
               <th>Depth (km)</th>
               <th>Lat</th>
               <th>Lon</th>
-              <th>Region</th>
             </tr>
           </thead>
           <tbody id="eventsBody"></tbody>
@@ -134,10 +136,8 @@
 {% endblock %}
 
 {% block scripts %}
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Config passed from Flask (change these if your API is /api/...) -->
   <script>
     window.DASH_CONFIG = {
       statsUrl: "{{ stats_url|default('/api/stats') }}",

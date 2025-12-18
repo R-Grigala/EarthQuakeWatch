@@ -1,10 +1,11 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
+from dateutil.relativedelta import relativedelta
+from sqlalchemy import func
 
 from flask_restx import Resource
 
 from src.api.nsmodels import stats_ns, stats_model
 from src.models import SeismicEvent
-from src.extensions import db
 
 
 @stats_ns.route('/stats')
@@ -17,56 +18,79 @@ from src.extensions import db
 class SeismicStatsAPI(Resource):
     @stats_ns.marshal_with(stats_model)
     def get(self):
-        """Basic statistics for seismic events (24h / 7d / 1y)"""
+        """Return basic seismic statistics for different time windows"""
 
+        # Current UTC time
         now = datetime.now(timezone.utc)
 
+        # Time windows for statistics
         windows = {
-            "24h": now - timedelta(hours=24),
-            "7d": now - timedelta(days=7),
-            "1y": now - timedelta(days=365),
+            "1m": now - relativedelta(months=1),
+            "6m": now - relativedelta(months=6),
+            "1y": now - relativedelta(years=1),
         }
 
         stats = {}
 
+        # Calculate stats for each time window
         for key, since in windows.items():
-            q = SeismicEvent.query.filter(SeismicEvent.origin_time >= since)
-
-            count = q.count()
-
-            avg_ml = (
-                db.session
-                .query(db.func.avg(SeismicEvent.ml))
+            # Total event count and maximum magnitude
+            count, max_ml = (
+                SeismicEvent.query
+                .with_entities(
+                    func.count(SeismicEvent.event_id),
+                    func.max(SeismicEvent.ml),
+                )
                 .filter(SeismicEvent.origin_time >= since)
-                .scalar()
+                .one()
             )
 
-            max_ml = (
-                db.session
-                .query(db.func.max(SeismicEvent.ml))
-                .filter(SeismicEvent.origin_time >= since)
+            # Offset for median (used as average magnitude here)
+            offset = count // 2
+
+            # Median magnitude (ordered by ML)
+            midl = (
+                SeismicEvent.query
+                .with_entities(SeismicEvent.ml)
+                .filter(
+                    SeismicEvent.origin_time >= since,
+                    SeismicEvent.ml.isnot(None)
+                )
+                .order_by(SeismicEvent.ml.asc())
+                .offset(offset)
+                .limit(1)
                 .scalar()
             )
 
             stats[key] = {
-                "count": count or 0,
-                "avg_ml": float(avg_ml) if avg_ml is not None else 0,
-                "max_ml": float(max_ml) if max_ml is not None else 0,
+                "count": int(count or 0),
+                "avg_ml": float(midl),
+                "max_ml": float(max_ml),
             }
 
-        # Total events in DB
-        total_events = db.session.query(db.func.count(SeismicEvent.event_id)).scalar() or 0
+        # Total number of events in the database
+        total_events = (
+            SeismicEvent.query
+            .with_entities(func.count(SeismicEvent.event_id))
+            .scalar()
+        ) or 0
 
-        # Updated timestamp from last inserted row (created_at)
-        updated_utc = db.session.query(db.func.max(SeismicEvent.created_at)).scalar()
+        # Last update timestamp (UTC)
+        updated_utc = (
+            SeismicEvent.query
+            .with_entities(func.max(SeismicEvent.created_at))
+            .scalar()
+        )
 
+        # API response
         return {
-            "count_last_24h": stats["24h"]["count"],
-            "avg_ml_last_24h": stats["24h"]["avg_ml"],
-            "max_ml_last_24h": stats["24h"]["max_ml"],
+            "count_last_1m": stats["1m"]["count"],
+            "avg_ml_last_1m": stats["1m"]["avg_ml"],
+            "max_ml_last_1m": stats["1m"]["max_ml"],
 
-            "count_last_7d": stats["7d"]["count"],
-            "avg_ml_last_7d": stats["7d"]["avg_ml"],
+            "count_last_6m": stats["6m"]["count"],
+            "avg_ml_last_6m": stats["6m"]["avg_ml"],
+            "max_ml_last_6m": stats["6m"]["max_ml"],
 
             "count_last_1y": stats["1y"]["count"],
             "avg_ml_last_1y": stats["1y"]["avg_ml"],
