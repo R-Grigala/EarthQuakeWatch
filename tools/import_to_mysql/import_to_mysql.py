@@ -26,7 +26,7 @@ TABLE_NAME = os.getenv("MYSQL_TABLE", "test_earthquakes")
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Absolute path to CSV file (located near the script)
-CSV_PATH = os.path.join(SCRIPT_DIR, "test_v_earthquakes .csv").strip()
+CSV_PATH = os.path.join(SCRIPT_DIR, "test_v_earthquakes.csv").strip()
 CSV_DELIMITER = os.getenv("CSV_DELIMITER", ",")
 CSV_ENCLOSED_BY = os.getenv("CSV_ENCLOSED_BY", '"')
 CSV_IGNORE_HEADER = int(os.getenv("CSV_IGNORE_HEADER", "1"))
