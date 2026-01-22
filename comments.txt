@@ -1,0 +1,2 @@
+select for mysql:
+SELECT * FROM `test_v_earthquakes` WHERE `origin_time` > '2026-01-01' and `ml` > 3 and area = 'local'
