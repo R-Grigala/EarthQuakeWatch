@@ -45,6 +45,15 @@ class SeismicStatsAPI(Resource):
                 .one()
             )
 
+            if not count:
+                # No events in this window
+                stats[key] = {
+                    "count": 0,
+                    "avg_ml": 0.0,
+                    "max_ml": 0.0,
+                }
+                continue
+
             # Offset for median (used as average magnitude here)
             offset = count // 2
 
@@ -64,8 +73,8 @@ class SeismicStatsAPI(Resource):
 
             stats[key] = {
                 "count": int(count or 0),
-                "avg_ml": float(midl),
-                "max_ml": float(max_ml),
+                "avg_ml": float(midl) if midl is not None else 0.0,
+                "max_ml": float(max_ml) if max_ml is not None else 0.0,
             }
 
         # Total number of events in the database

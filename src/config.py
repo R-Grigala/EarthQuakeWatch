@@ -35,3 +35,10 @@ class Config:
             'description': 'Provide the internal API key for ingestion'
         }
     }
+
+
+class TestConfig(Config):
+
+    TESTING = True
+    WTF_CSRF_ENABLED = False
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"

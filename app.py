@@ -1,7 +1,4 @@
 from src import create_app
-# from src.config import TestConfig
-
-# flask_app = create_app(TestConfig)
 
 flask_app = create_app()
 
